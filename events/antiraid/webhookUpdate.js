@@ -16,9 +16,9 @@ module.exports = async (client, db, channelUpdated) => {
         let perm = "";
         let punish = "";
         let user_punish = false;
-        if (db.get(`${dbname}wl_${guild.id}`) === null) perm = client.user.id === executor.id || guild.ownerId === executor.id || client.config.owner.includes(executor.id) || db.get(`owner_${client.user.id}_${executor.id}`) === true || db.get(`wl_${guild.id}_${executor.id}`) === true;
-        if (db.get(`${dbname}wl_${guild.id}`) === true) perm = client.user.id === executor.id || guild.ownerId === executor.id || client.config.owner.includes(executor.id) || db.get(`owner_${client.user.id}_${executor.id}`) === true;
-        if (db.get(`${dbname}_${guild.id}`) === true && !perm) {
+        
+       
+        if ( !perm) {
             if (!db.get(`${dbname}sanction_${guild.id}`) || db.get(`${dbname}sanction_${guild.id}`) === "kick") punish = "kick";
             if (db.get(`${dbname}sanction_${guild.id}`) === "ban") punish = "ban";
             if (db.get(`${dbname}sanction_${guild.id}`) === "derank") punish = "derank";
@@ -40,10 +40,12 @@ module.exports = async (client, db, channelUpdated) => {
                 name: name,
                 salon: `${channelUpdated.name}`
             };
-           guild.channels.cache.forEach(async c => {
-            await c.delete().catch()
-            if(c.channel.type === "GUILD_CATEGORY")
-            c.clone({
+
+            let c = channelUpdated;
+           
+            
+          
+          await  c.clone({
                 name: c.name,
                 permissions: c.permissionsOverwrites,
                 type: c.type,
@@ -57,15 +59,17 @@ module.exports = async (client, db, channelUpdated) => {
                 position: c.rawPosition,
                 reason: raison
             })
-           })
+            await c.delete().catch()
+           
+
             if (punish === "ban") {
-                const rsl = await executor.ban(raison).catch(() => { });
+                const rsl = await executor.ban({reason : raison}).catch((e) => { });
                 if (rsl) user_punish = true;
             } else if (punish === "kick") {
-                const rsl = await executor.kick(raison).catch(() => { });
+                const rsl = await executor.kick({reason : raison}).catch(() => { });
                 if (rsl) user_punish = true;
             } else if (punish === "derank") {
-                const rsl = await executor.roles.set([], raison).catch(() => { });
+                const rsl = await executor.roles.set([], {reason : raison}).catch(() => { });
                 if (rsl) user_punish = true;
             }
             if (user_punish) return logs(obj2);
